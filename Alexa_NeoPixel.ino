@@ -2,13 +2,13 @@
 #include <Adafruit_NeoPixel.h>
     
 #define DATA_PIN 13
-#define SIZE 24 // You can use number of LEDs, but Echo Dot has only 12 LEDs, so the code performs better with multiples of 12 (24,36,48,...)
+#define SIZE 144 // You can use number of LEDs, but Echo Dot has only 12 LEDs, so the code performs better with multiples of 12 (24,36,48,...)
 
 const int DURATION = 1000; // animation duration
 
 const int STEP_SIZE = DURATION/SIZE;
 
-Adafruit_NeoPixel ring = Adafruit_NeoPixel(SIZE, DATA_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel ring = Adafruit_NeoPixel(SIZE, DATA_PIN, NEO_RGB + NEO_KHZ800);
 
 // define all the colors used by Amazon for the Alexa UX as describe on README text
 const uint32_t CYAN = ring.Color(0, 255, 255);
@@ -93,7 +93,18 @@ void listening_end(int width=ceil(SIZE/12.0))
   }
 }
 
-void thinking(){}
+void thinking()
+{
+  if (millis() - last_increment > STEP_SIZE) 
+  {
+    last_increment = millis();
+    if (counter>=(SIZE/2))
+    {
+      state = LISTENING;
+      counter = (SIZE/2)-width;
+      return;
+    }
+}
 
 void speaking(){}
 
