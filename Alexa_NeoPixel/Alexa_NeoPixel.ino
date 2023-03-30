@@ -35,28 +35,26 @@ enum states
 
 void listening_start(int width=ceil(SIZE/12.0))
 {
-  if (millis() - last_increment > STEP_SIZE) 
+
+  if (counter>=(SIZE/2))
   {
-    last_increment = millis();
-    if (counter>=(SIZE/2))
+    state = LISTENING;
+    counter = (SIZE/2)-width;
+    return;
+  }
+  
+  for (int i=counter; i<counter+width ; i++) 
+  {
+    if(i>=width)
     {
-      state = LISTENING;
-      counter = (SIZE/2)-width;
-      return;
-    }
-    
-    for (int i=counter; i<counter+width ; i++) 
-    {
-      if(i>=width)
-      {
       ring.setPixelColor(i - width, BLUE); // rotate clockwise
       ring.setPixelColor(SIZE-1 - i + width, BLUE); // rotate anticlockwise
-      }
-      ring.setPixelColor(i, CYAN); // rotate clockwise
-      ring.setPixelColor(SIZE-1 - i, CYAN); // rotate anticlockwise
     }
-    counter = counter+width;
+    ring.setPixelColor(i, CYAN); // rotate clockwise
+    ring.setPixelColor(SIZE-1 - i, CYAN); // rotate anticlockwise
   }
+  counter = counter+width;
+
 }
 
 void listening_active()
@@ -68,42 +66,41 @@ void listening_active()
 
 void listening_end(int width=ceil(SIZE/12.0))
 {
-  if (millis() - last_increment > STEP_SIZE) 
+  if (counter<0)
   {
-    last_increment = millis();
-
-    if (counter<0)
-    {
-      delay(2000);
-      state = START_LISTENING;
-      return;
-    }
-    
-    for (int i=counter; i<counter+width ; i++) 
-    {
-      if(counter<=(SIZE/2)-width)
-      {
-        ring.setPixelColor(i, BLANK); // rotate clockwise
-        ring.setPixelColor(SIZE-1 - i, BLANK); // rotate anticlockwise
-      }
-      ring.setPixelColor(i - width, CYAN); // rotate clockwise
-      ring.setPixelColor(SIZE-1 - i + width, CYAN); // rotate anticlockwise
-    }
-    counter = counter-width;
+    delay(2000);
+    state = START_LISTENING;
+    return;
   }
+  
+  for (int i=counter; i<counter+width ; i++) 
+  {
+    if(counter<=(SIZE/2)-width)
+    {
+      ring.setPixelColor(i, BLANK); // rotate clockwise
+      ring.setPixelColor(SIZE-1 - i, BLANK); // rotate anticlockwise
+    }
+    ring.setPixelColor(i - width, CYAN); // rotate clockwise
+    ring.setPixelColor(SIZE-1 - i + width, CYAN); // rotate anticlockwise
+  }
+  counter = counter-width;
 }
 
-void thinking()
+void thinking(int width=ceil(SIZE/12.0))
 {
-  if (millis() - last_increment > STEP_SIZE) 
+  if (counter>=(SIZE))
   {
-    last_increment = millis();
-    if (counter>=(SIZE/2))
-    {
-      state = LISTENING;
-      counter = (SIZE/2)-width;
-      return;
-    }
+    state = LISTENING;
+    counter = (SIZE)-width;
+    return;
+  }
+  
+  for (int i=counter; i<counter+width ; i++) 
+  {
+    ring.setPixelColor(i, CYAN); // rotate clockwise
+    ring.setPixelColor(SIZE-1 - i, CYAN); // rotate anticlockwise
+  }
+  counter = counter+width;
 }
 
 void speaking(){}
@@ -156,12 +153,16 @@ void setup()
 
 void loop() 
 {   
-  switch (state) 
+  if (millis() - last_increment > STEP_SIZE) 
   {
-    case START_LISTENING: listening_start();   break;
-    case LISTENING:       listening_active();         break;
-    case END_LISTENING:   listening_end();     break;
-    default:              listening_active();         break;
+    last_increment = millis();
+    switch (state) 
+    {
+      case START_LISTENING: listening_start();   break;
+      case LISTENING:       listening_active();         break;
+      case END_LISTENING:   listening_end();     break;
+      default:              listening_active();         break;
+    }
   }
   ring.show();
 }
