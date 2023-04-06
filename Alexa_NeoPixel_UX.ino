@@ -74,7 +74,7 @@ void listening_end(int width=ceil(SIZE/12.0))
   if (counter<0)
   {
     delay(2000);
-    state = THINKING;
+    state = START_LISTENING;
     return;
   }
   
@@ -118,7 +118,7 @@ void thinking(int width=ceil(SIZE/12.0))
   counter = counter+width;
 }
 
-void pulse(uint32_t c1, uint32_t c2) 
+void pulse(uint32_t c1, uint32_t c2,int width=ceil(SIZE/12.0)) 
 {
   
   uint8_t r = (c1>>16 & 0xFF);
@@ -150,8 +150,8 @@ void pulse(uint32_t c1, uint32_t c2)
   }
   if (out_flag>6)
   {
-    counter = 0;
-    state = START_LISTENING;
+    counter = (SIZE/2)-width;
+    state = END_LISTENING;
     out_flag=0;
     return;
   }
