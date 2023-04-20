@@ -171,11 +171,20 @@ void end_speaking()
   listening_end();
 }
 
-void Microphone_on_to_off(){}
+void Microphone_on_to_off()
+{
+  pulse(BLANK,RED);
+}
 
-void microphone_off(){}
+void microphone_off()
+{
+  
+}
 
-void Microphone_off_to_on(){}
+void Microphone_off_to_on()
+{
+  pulse(RED,BLANK);
+}
 
 void timer(){}
 
