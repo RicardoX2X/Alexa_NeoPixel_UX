@@ -1,12 +1,12 @@
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
     
-#define DATA_PIN 13
+#define DATA_PIN 12
 #define SIZE 144 // You can use number of LEDs, but Echo Dot has only 12 LEDs, so the code performs better with multiples of 12 (24,36,48,...)
 
 int BRIGHT = 200;
 
-const int DURATION = 4000; // animation duration
+const int DURATION = 7000; // animation duration
 
 const int STEP_SIZE = DURATION/SIZE;
 
@@ -32,22 +32,30 @@ enum states
 {
   START_LISTENING,
   LISTENING,
-  END_LISTENING,
   THINKING,
   SPEAKING,
+  END_LISTENING,
 } state;
+
+bool isListening = true;
+unsigned long pixelPrevious = 0;        // Previous Pixel Millis
+unsigned long patternPrevious = 0;      // Previous Pattern Millis
+int           patternCurrent = 0;       // Current Pattern Number
+int           patternInterval = 5000;   // Pattern Interval (ms)
+bool          patternComplete = false;
 
 
 void listening_start(int width=ceil(SIZE/12.0))
 {
-
+  //if (!isListening) return;
   if (counter>=(SIZE/2))
   {
-    state = LISTENING;
-    counter = (SIZE/2)-width;
+    counter = 0;
+    isListening = true;
+    patternComplete = true;
     return;
   }
-  
+
   for (int i=counter; i<counter+width ; i++) 
   {
     if(i>=width)
@@ -60,21 +68,21 @@ void listening_start(int width=ceil(SIZE/12.0))
   }
   counter = counter+width;
 
-}
 
-void listening_active()
-{
-  delay(3000);
-  state = THINKING;
-  return;
 }
 
 void listening_end(int width=ceil(SIZE/12.0))
 {
+
+  if (patternComplete == false && isListening == true)
+  {
+    counter = (SIZE/2)-width;
+    isListening = false;
+  }
+
   if (counter<0)
   {
-    delay(2000);
-    state = START_LISTENING;
+    patternComplete = true;
     return;
   }
   
@@ -92,6 +100,13 @@ void listening_end(int width=ceil(SIZE/12.0))
 }
 
 
+void listening_active()
+{
+  delay(1000);
+  patternComplete =true;
+  return;
+}
+
 void thinking(int width=ceil(SIZE/12.0))
 {
   if (counter>=SIZE)
@@ -100,7 +115,7 @@ void thinking(int width=ceil(SIZE/12.0))
     out_flag++;
     if (out_flag>3)
     {
-      state = SPEAKING;
+      patternComplete =true;
       out_flag=0;
       return;
     }
@@ -151,8 +166,8 @@ void pulse(uint32_t c1, uint32_t c2,int width=ceil(SIZE/12.0))
   if (out_flag>6)
   {
     counter = (SIZE/2)-width;
-    state = END_LISTENING;
     out_flag=0;
+    patternComplete = true;
     return;
   }
   gr = g + counter;
@@ -165,47 +180,6 @@ void speaking()
 {
   pulse(BLUE,CYAN);
 }
-
-void end_speaking()
-{
-  listening_end();
-}
-
-void Microphone_on_to_off(){}
-
-void microphone_off(){}
-
-void Microphone_off_to_on(){}
-
-void timer(){}
-
-void timer_short(){}
-
-void alarm(){}
-
-void alarm_short(){}
-
-void reminder(){}
-
-void reminder_short(){}
-
-void incoming_notification(){}
-
-void queued_notification(){}
-
-void enable_do_not_disturb(){}
-
-void do_not_disturb_enabled(){}
-
-void disable_do_not_disturb(){}
-
-void bluetooth_connected(){}
-
-void bluetooth_disconnected(){}
-
-void error(){}
-
-/*** THE REAL STUFF HAPPEN HERE ***/
 
 void setup() 
 {
@@ -231,6 +205,16 @@ void loop()
       case SPEAKING:        speaking();           break;
       default:              listening_active();         break;
     }
+    ring.show();
   }
-  ring.show();
+  unsigned long currentMillis = millis();                     //  Update current time
+  if( patternComplete || (currentMillis - patternPrevious) >= patternInterval) {  //  Check for expired time
+    patternComplete = false;
+    patternPrevious = currentMillis;
+    if (state == END_LISTENING)
+      state = START_LISTENING; // Reset
+    else
+      state = static_cast<states>(state + 1);
+  }
+  
 }
